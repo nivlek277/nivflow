@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NivFlow ✨</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet" />
+  <link rel="icon" type="assets/logo.png" href="/assets/logo.png">
+  <style>
+    
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+
+    :root {
+      --bg:           #0b0f1a;
+      --bg2:          #0f1420;
+      --panel:        rgba(16, 22, 40, 0.82);
+      --panel-border: rgba(255,255,255,0.07);
+      --accent:       #c9aa7a;
+      --accent2:      #7eb8c9;
+      --text:         #e4ddd0;
+      --text-m:       #6e7585;
+      --green:        #6dba8a;
+      --purple:       #9b7fc7;
+      --glass:        rgba(255,255,255,0.03);
+      --glass2:       rgba(255,255,255,0.07);
+      --r:            14px;
+      --transition:   0.4s cubic-bezier(.4,0,.2,1);
+    }
+    [data-theme="day"] {
+      --bg:           #ede8df;
+      --bg2:          #e4dfd5;
+      --panel:        rgba(252, 249, 244, 0.88);
+      --panel-border: rgba(0,0,0,0.07);
+      --accent:       #9a6f40;
+      --accent2:      #3d7d90;
+      --text:         #282318;
+      --text-m:       #8a816e;
+      --glass:        rgba(0,0,0,0.02);
+      --glass2:       rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background var(--transition), color var(--transition);
+    }
+    #bg-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+    .app {
+      position: relative; z-index: 1;
+      display: grid; grid-template-rows: auto 1fr;
+      min-height: 100vh; padding: 14px; gap: 14px;
+    }
+
+    header {
+      display: flex; align-items: center; gap: 18px; padding: 11px 18px;
+      background: var(--panel); border: 1px solid var(--panel-border);
+      border-radius: var(--r); backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px); transition: all var(--transition);
+    }
+    .logo { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 21px; color: var(--accent); letter-spacing: 0.5px; white-space: nowrap; user-select: none; cursor: default; }
+    .logo em { color: var(--accent2); font-style: normal; }
+    .clock-wrap { text-align: center; }
+    #time { font-size: 20px; font-weight: 500; letter-spacing: 3px; font-variant-numeric: tabular-nums; }
+    #date { font-size: 10px; color: var(--text-m); letter-spacing: 0.5px; margin-top: 1px; }
+    .quote-wrap { flex: 1; text-align: center; padding: 0 12px; overflow: hidden; }
+    #quote { font-size: 12px; font-style: italic; color: var(--text-m); line-height: 1.5; transition: opacity 0.5s; }
+    .hdr-actions { display: flex; gap: 7px; }
+    .ibtn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text-m); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.2s; }
+    .ibtn:hover { background: var(--glass2); color: var(--accent); transform: translateY(-1px); }
+    .ibtn.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+    .grid { display: grid; grid-template-columns: 268px 1fr 268px; gap: 14px; align-items: start; }
+    .panel { background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--r); padding: 18px; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); transition: all var(--transition); }
+    .ptitle { font-size: 10px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: var(--text-m); margin-bottom: 14px; }
+    .divider { height: 1px; background: var(--panel-border); margin: 16px 0; }
+
+    .now-playing { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .vinyl-wrap { width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #1c2a4a, #3a1c4a); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .vinyl { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(#1a1a2e 0deg, #2d2d50 90deg, #1a1a2e 180deg, #2d2d50 270deg, #1a1a2e 360deg); border: 1.5px solid rgba(255,255,255,0.08); position: relative; animation: vspin 4s linear infinite paused; }
+    .vinyl.on { animation-play-state: running; }
+    .vinyl::after { content: ''; position: absolute; inset: 0; margin: auto; width: 9px; height: 9px; background: var(--bg2); border-radius: 50%; }
+    @keyframes vspin { to { transform: rotate(360deg); } }
+    .track-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-sub { font-size: 10px; color: var(--text-m); margin-top: 3px; }
+    .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip { padding: 4px 11px; border-radius: 20px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text-m); font-family: 'Quicksand', sans-serif; font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .chip.on, .chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(201,170,122,0.08); }
+    .player-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px; }
+    .cbtn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s; }
+    .cbtn:hover { transform: scale(1.1); background: var(--glass2); }
+    .cbtn.play { width: 42px; height: 42px; background: var(--accent); border-color: var(--accent); color: var(--bg); font-size: 15px; }
+    .cbtn.play:hover { filter: brightness(1.12); }
+    input[type="range"] { -webkit-appearance: none; appearance: none; flex: 1; height: 3px; border-radius: 2px; background: var(--panel-border); outline: none; cursor: pointer; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); cursor: pointer; transition: transform 0.15s; }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+    .vol-row { display: flex; align-items: center; gap: 8px; }
+    .vol-icon { font-size: 12px; color: var(--text-m); }
+    .amb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .amb-card { border-radius: 11px; border: 1px solid var(--panel-border); background: var(--glass); padding: 10px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 5px; }
+    .amb-card:hover { border-color: var(--accent2); transform: translateY(-1px); }
+    .amb-card.on { border-color: var(--accent2); background: rgba(126,184,201,0.08); }
+    .amb-top { display: flex; align-items: center; justify-content: space-between; }
+    .amb-icon { font-size: 17px; }
+    .amb-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-m); transition: background 0.2s; }
+    .amb-card.on .amb-dot { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+    .amb-label { font-size: 10px; font-weight: 500; color: var(--text-m); }
+    .amb-slider { width: 100%; height: 2px; opacity: 0; transition: opacity 0.2s; margin-top: 2px; }
+    .amb-card.on .amb-slider { opacity: 1; }
+    .reset-btn { width: 100%; padding: 8px; border-radius: 9px; border: 1px solid var(--panel-border); background: transparent; color: var(--text-m); font-family: 'Quicksand', sans-serif; font-size: 10px; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
+    .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .center { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ═══════════════════════════════════════════════════
+       ── VIDEO WIDGET ──────────────────────────────────
+       ═══════════════════════════════════════════════════ */
+    .video-section { display: flex; flex-direction: column; gap: 12px; }
+
+    /* Outer: controls width centering */
+    .video-outer { display: flex; justify-content: center; }
+
+    /* Frame: the visible container */
+    .video-frame {
+      position: relative;
+      border-radius: 13px;
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+      background: #000;
+      /* default: full width, 190px tall */
+      width: 100%;
+      height: 190px;
+      transition: opacity 0.3s, width 0.25s, height 0.25s;
+    }
+
+    /* iframe is oversized to hide YouTube UI chrome */
+    .video-frame iframe {
+      position: absolute;
+      top:    -50px;   /* hide top bar with title */
+      left:   -2px;
+      width:  calc(100% + 4px);
+      height: calc(100% + 100px);
+      border: none;
+      pointer-events: none; /* decorative only — no interaction */
+    }
+
+    /* Subtle vignette overlay */
+    .video-overlay {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.22) 100%);
+    }
+
+    /* Three slider controls */
+    .video-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .vc-group { display: flex; flex-direction: column; gap: 5px; }
+    .vc-label { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: var(--text-m); letter-spacing: 0.5px; text-transform: uppercase; }
+    .vc-val { font-size: 9px; color: var(--accent2); font-weight: 700; }
+    .vc-group input[type="range"] { flex: unset; width: 100%; }
+    .vc-group input[type="range"]::-webkit-slider-thumb { background: var(--accent2); }
+    /* ── END VIDEO WIDGET ── */
+
+    .pomo-section { text-align: center; }
+    .timer-modes { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .tmbtn { padding: 4px 12px; border-radius: 14px; border: 1px solid var(--panel-border); background: transparent; color: var(--text-m); font-family: 'Quicksand', sans-serif; font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .tmbtn.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .timer-disp { font-size: 54px; font-weight: 300; letter-spacing: 4px; font-variant-numeric: tabular-nums; margin: 6px 0; }
+    .progress-bar { height: 2px; background: var(--panel-border); border-radius: 1px; margin: 10px 0; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
+    .session-dots { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+    .sdot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--accent); transition: background 0.3s; }
+    .sdot.on { background: var(--accent); }
+    .custom-dur { display: none; margin-bottom: 10px; align-items: center; gap: 8px; justify-content: center; }
+    .custom-dur input { width: 58px; padding: 4px 8px; border-radius: 7px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text); font-family: 'Quicksand', sans-serif; text-align: center; font-size: 13px; outline: none; }
+
+    .todo-add { display: flex; gap: 7px; margin-bottom: 11px; }
+    .todo-input { flex: 1; padding: 8px 11px; border-radius: 9px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text); font-family: 'Quicksand', sans-serif; font-size: 12px; outline: none; transition: border-color 0.2s; }
+    .todo-input:focus { border-color: var(--accent); }
+    .todo-input::placeholder { color: var(--text-m); }
+    .todo-plus { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--accent); background: rgba(201,170,122,0.08); color: var(--accent); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+    .todo-plus:hover { background: rgba(201,170,122,0.18); }
+    .todo-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+    .todo-list::-webkit-scrollbar { width: 3px; }
+    .todo-list::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+    .todo-item { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 9px; border: 1px solid var(--panel-border); background: var(--glass); animation: fadein 0.2s ease; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .todo-check { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--panel-border); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 10px; }
+    .todo-item.done .todo-check { background: var(--green); border-color: var(--green); color: white; }
+    .todo-item.done .todo-text { text-decoration: line-through; color: var(--text-m); }
+    .todo-text { flex: 1; font-size: 11px; line-height: 1.4; }
+    .todo-del { width: 16px; height: 16px; border: none; background: transparent; color: var(--text-m); cursor: pointer; font-size: 12px; opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; }
+    .todo-item:hover .todo-del { opacity: 1; }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .stat-card { text-align: center; padding: 11px 8px; border-radius: 9px; border: 1px solid var(--panel-border); background: var(--glass); }
+    .stat-val { font-size: 20px; font-weight: 500; }
+    .stat-lbl { font-size: 9px; color: var(--text-m); margin-top: 3px; letter-spacing: 0.5px; }
+
+    .note-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .note-header .ptitle { margin-bottom: 0; }
+    .note-fs-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text-m); cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+    .note-fs-btn:hover { background: var(--glass2); color: var(--accent2); border-color: var(--accent2); }
+    .quick-note { width: 100%; height: 88px; padding: 10px 11px; border-radius: 9px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text); font-family: 'Quicksand', sans-serif; font-size: 11px; resize: none; outline: none; line-height: 1.6; transition: border-color 0.2s; }
+    .quick-note:focus { border-color: var(--accent2); }
+    .quick-note::placeholder { color: var(--text-m); }
+
+    .note-fullscreen { position: fixed; inset: 0; z-index: 200; background: var(--bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: flex; flex-direction: column; padding: 28px; opacity: 0; pointer-events: none; transition: opacity 0.35s cubic-bezier(.4,0,.2,1); }
+    .note-fullscreen.open { opacity: 1; pointer-events: all; }
+    .note-fs-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .note-fs-title { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 22px; color: var(--accent); }
+    .note-fs-close { display: flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 20px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text-m); font-family: 'Quicksand', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+    .note-fs-close:hover { border-color: var(--accent2); color: var(--accent2); }
+    .note-fs-area { flex: 1; width: 100%; padding: 20px 24px; border-radius: var(--r); border: 1px solid var(--panel-border); background: var(--panel); color: var(--text); font-family: 'Quicksand', sans-serif; font-size: 15px; line-height: 1.9; resize: none; outline: none; transition: border-color 0.2s; }
+    .note-fs-area:focus { border-color: var(--accent2); }
+    .note-fs-area::placeholder { color: var(--text-m); }
+    .note-fs-status { text-align: right; font-size: 10px; color: var(--text-m); margin-top: 10px; letter-spacing: 0.5px; }
+
+    .weather-search-wrap { position: relative; margin-bottom: 14px; }
+    .weather-search-row { display: flex; gap: 7px; align-items: center; }
+    .weather-inp { flex: 1; padding: 8px 11px; border-radius: 9px; border: 1px solid var(--panel-border); background: var(--glass); color: var(--text); font-family: 'Quicksand', sans-serif; font-size: 12px; outline: none; transition: border-color 0.2s; }
+    .weather-inp:focus { border-color: var(--accent2); }
+    .weather-inp::placeholder { color: var(--text-m); }
+    .weather-save-btn { padding: 7px 13px; border-radius: 9px; border: 1px solid var(--accent2); background: rgba(126,184,201,0.08); color: var(--accent2); font-family: 'Quicksand', sans-serif; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .weather-save-btn:hover { background: rgba(126,184,201,0.18); }
+    .weather-suggestions { position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 11px; overflow: hidden; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); z-index: 50; box-shadow: 0 12px 32px rgba(0,0,0,0.35); display: none; }
+    .weather-suggestions.open { display: block; animation: sugg-in 0.15s ease; }
+    @keyframes sugg-in { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: none; } }
+    .sugg-item { display: flex; align-items: center; gap: 10px; padding: 9px 13px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--panel-border); }
+    .sugg-item:last-child { border-bottom: none; }
+    .sugg-item:hover { background: var(--glass2); }
+    .sugg-city { font-size: 12px; font-weight: 500; }
+    .sugg-meta { font-size: 10px; color: var(--text-m); }
+    .weather-card { border-radius: 12px; border: 1px solid var(--panel-border); background: var(--glass); padding: 14px; display: none; animation: fadein 0.3s ease; }
+    .weather-card.visible { display: block; }
+    .weather-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .weather-city-name { font-size: 13px; font-weight: 600; }
+    .weather-country { font-size: 10px; color: var(--text-m); margin-top: 2px; }
+    .weather-main { display: flex; align-items: center; gap: 6px; }
+    .weather-emoji { font-size: 28px; line-height: 1; }
+    .weather-temp { font-size: 32px; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--accent); }
+    .weather-unit { font-size: 14px; color: var(--text-m); align-self: flex-start; margin-top: 6px; }
+    .weather-desc { font-size: 10px; color: var(--text-m); margin-top: 6px; font-style: italic; }
+    .weather-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 12px; }
+    .wd-item { text-align: center; padding: 7px 4px; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--glass); }
+    .wd-val { font-size: 12px; font-weight: 500; color: var(--accent2); }
+    .wd-lbl { font-size: 9px; color: var(--text-m); margin-top: 2px; letter-spacing: 0.3px; }
+    .weather-updated { font-size: 9px; color: var(--text-m); text-align: right; margin-top: 10px; letter-spacing: 0.3px; }
+    .weather-refresh-btn { display: flex; align-items: center; gap: 5px; margin-top: 8px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--panel-border); background: transparent; color: var(--text-m); font-family: 'Quicksand', sans-serif; font-size: 10px; cursor: pointer; transition: all 0.2s; width: 100%; justify-content: center; }
+    .weather-refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .weather-loading { text-align: center; padding: 20px 0; color: var(--text-m); font-size: 11px; display: none; }
+    .weather-loading.show { display: block; }
+    .weather-error { font-size: 10px; color: #e07878; text-align: center; padding: 8px; display: none; margin-top: 6px; }
+    .weather-error.show { display: block; }
+
+    body.deep-focus header { opacity: 0.25; transition: opacity 0.4s; }
+    body.deep-focus header:hover { opacity: 1; }
+    body.deep-focus .side-panel { opacity: 0.08; pointer-events: none; transition: opacity 0.4s; }
+    body.deep-focus .side-panel:hover { opacity: 0.95; pointer-events: all; }
+
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--panel); border: 1px solid var(--panel-border); backdrop-filter: blur(20px); color: var(--text); padding: 9px 18px; border-radius: 18px; font-size: 12px; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } header { flex-wrap: wrap; gap: 10px; } .quote-wrap { order: 3; width: 100%; } }
+    @media (max-width: 520px) { .app { padding: 9px; gap: 9px; } .timer-disp { font-size: 40px; } }
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+    #yt-wrap, #yt-amb-wrap { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; left: 0; top: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+  </style>
+</head>
+<body>
+
+  <div id="yt-wrap"><div id="yt-player"></div></div>
+  <div id="yt-amb-wrap">
+    <div id="yt-amb-rain"></div>
+    <div id="yt-amb-wind"></div>
+    <div id="yt-amb-fire"></div>
+    <div id="yt-amb-cafe"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Note fullscreen -->
+  <div class="note-fullscreen" id="note-fullscreen">
+    <div class="note-fs-topbar">
+      <div class="note-fs-title">🌸 Quick Note</div>
+      <button class="note-fs-close" id="note-fs-close"><span>⊡</span> Réduire</button>
+    </div>
+    <textarea class="note-fs-area" id="note-fs-area" placeholder="Vos pensées…"></textarea>
+    <div class="note-fs-status" id="note-fs-status">0 mots · sauvegardé</div>
+  </div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="app">
+
+    <header>
+      <div class="logo" id="logo">niv<em>flow</em></div>
+      <div class="clock-wrap">
+        <div id="time">00:00:00</div>
+        <div id="date">—</div>
+      </div>
+      <div class="quote-wrap"><span id="quote">Finding your moment of calm…</span></div>
+      <div class="hdr-actions">
+        <button class="ibtn" id="theme-btn" title="Toggle day/night">🌙</button>
+        <button class="ibtn" id="focus-btn" title="Deep focus mode">◎</button>
+      </div>
+    </header>
+
+    <div class="grid">
+
+      <!-- LEFT: AUDIO -->
+      <aside class="panel side-panel" id="audio-panel">
+        <div class="ptitle">🎵 Music</div>
+        <div class="now-playing">
+          <div class="vinyl-wrap"><div class="vinyl" id="vinyl"></div></div>
+          <div style="flex:1;overflow:hidden;">
+            <div class="track-name" id="track-name">Lofi Hip Hop Radio</div>
+            <div class="track-sub" id="track-sub">Lofi Girl ✦ 24/7</div>
+          </div>
+        </div>
+        <div class="chips">
+          <button class="chip on" data-pl="lofi-girl">Lofi Girl</button>
+          <button class="chip" data-pl="chillhop">Chillhop</button>
+          <button class="chip" data-pl="jazz">Jazz Café</button>
+        </div>
+        <div class="player-row">
+          <button class="cbtn" id="prev-btn">⏮</button>
+          <button class="cbtn play" id="play-btn">▶</button>
+          <button class="cbtn" id="next-btn">⏭</button>
+        </div>
+        <div class="vol-row" style="margin-bottom:16px;">
+          <span class="vol-icon">🔈</span>
+          <input type="range" id="music-vol" min="0" max="74" value="70" />
+          <span class="vol-icon">🔊</span>
+        </div>
+        <div class="divider"></div>
+        <div class="ptitle">🌿 Ambience Mixer</div>
+        <div class="amb-grid">
+          <div class="amb-card" data-sound="rain">
+            <div class="amb-top"><span class="amb-icon">🌧️</span><span class="amb-dot"></span></div>
+            <div class="amb-label">Rain</div>
+            <input type="range" class="amb-slider" min="0" max="100" value="10" />
+          </div>
+          <div class="amb-card" data-sound="wind">
+            <div class="amb-top"><span class="amb-icon">🍃</span><span class="amb-dot"></span></div>
+            <div class="amb-label">Wind</div>
+            <input type="range" class="amb-slider" min="0" max="100" value="10" />
+          </div>
+          <div class="amb-card" data-sound="fire">
+            <div class="amb-top"><span class="amb-icon">🔥</span><span class="amb-dot"></span></div>
+            <div class="amb-label">Fireplace</div>
+            <input type="range" class="amb-slider" min="0" max="100" value="10" />
+          </div>
+          <div class="amb-card" data-sound="cafe">
+            <div class="amb-top"><span class="amb-icon">☕</span><span class="amb-dot"></span></div>
+            <div class="amb-label">Café</div>
+            <input type="range" class="amb-slider" min="0" max="100" value="10" />
+          </div>
+        </div>
+        <button class="reset-btn" id="reset-btn">↺ Reset ambiance</button>
+      </aside>
+
+      <!-- CENTER -->
+      <section class="panel center">
+
+        <!-- ═══════════════════════════════════════════
+             🎬  VIDEO D'AMBIANCE
+             ═══════════════════════════════════════════ -->
+        <div class="ptitle">🎬 Vidéo d'ambiance</div>
+        <div class="video-section">
+
+          <div class="video-outer">
+            <div class="video-frame" id="video-frame">
+
+              <!--
+              ╔══════════════════════════════════════════╗
+              ║   #MET TA VIDEO ICI                      ║
+              ║   Remplace les deux VIDEO_ID ci-dessous  ║
+              ║   par l'ID YouTube de ta vidéo.          ║
+              ║   Ex : jfKfPfyJRdk                       ║
+              ║   (youtube.com/watch?v=XXXXXXXXXXX)      ║
+              ╚══════════════════════════════════════════╝
+              -->
+              <iframe
+                id="bg-video-iframe"
+                src="https://www.youtube.com/embed/UJs6__K7gSY?autoplay=1&mute=1&loop=1&playlist=UJs6__K7gSY&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1&enablejsapi=0"
+                allow="autoplay; encrypted-media"
+                allowfullscreen
+                title="Vidéo d'ambiance — sans son"
+              ></iframe>
+
+              <!-- vignette douce -->
+              <div class="video-overlay"></div>
+            </div>
+          </div>
+
+          <!-- Sliders de personnalisation -->
+          <div class="video-controls">
+
+            <div class="vc-group">
+              <div class="vc-label">
+                <span>Opacité</span>
+                <span class="vc-val" id="vc-opacity-val">80%</span>
+              </div>
+              <input type="range" id="vc-opacity" min="5" max="100" value="80" />
+            </div>
+
+            <div class="vc-group">
+              <div class="vc-label">
+                <span>Largeur</span>
+                <span class="vc-val" id="vc-width-val">100%</span>
+              </div>
+              <input type="range" id="vc-width" min="30" max="100" value="100" />
+            </div>
+
+            <div class="vc-group">
+              <div class="vc-label">
+                <span>Hauteur</span>
+                <span class="vc-val" id="vc-height-val">190px</span>
+              </div>
+              <input type="range" id="vc-height" min="420" max="430" value="190" step="10" />
+            </div>
+
+          </div>
+        </div>
+        <!-- ── FIN VIDEO WIDGET ── -->
+
+        <div class="divider"></div>
+
+        <!-- POMODORO -->
+        <div class="ptitle">⏱ Focus Timer</div>
+        <div class="pomo-section">
+          <div class="timer-modes">
+            <button class="tmbtn on" data-mode="focus" data-dur="25">Focus 25m</button>
+            <button class="tmbtn" data-mode="short" data-dur="5">Break 5m</button>
+            <button class="tmbtn" data-mode="long" data-dur="15">Long 15m</button>
+            <button class="tmbtn" data-mode="custom" data-dur="0">Custom</button>
+          </div>
+          <div class="custom-dur" id="custom-dur">
+            <input type="number" id="custom-min" min="1" max="180" value="30" />
+            <span style="font-size:11px;color:var(--text-m);">minutes</span>
+          </div>
+          <div class="timer-disp" id="timer-disp">25:00</div>
+          <div class="progress-bar"><div class="progress-fill" id="prog" style="width:100%"></div></div>
+          <div class="player-row" style="margin-bottom:0;">
+            <button class="cbtn" id="timer-reset">↺</button>
+            <button class="cbtn play" id="timer-play">▶</button>
+          </div>
+          <div style="font-size:10px;color:var(--text-m);margin:10px 0 6px;">Sessions today</div>
+          <div class="session-dots" id="sdots">
+            <div class="sdot"></div><div class="sdot"></div>
+            <div class="sdot"></div><div class="sdot"></div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT: TOOLS -->
+      <aside class="panel side-panel">
+
+        <div class="ptitle">✅ Focus Tasks</div>
+        <div class="todo-add">
+          <input class="todo-input" id="todo-inp" placeholder="Add a task…" maxlength="120" />
+          <button class="todo-plus" id="todo-add">+</button>
+        </div>
+        <div class="todo-list" id="todo-list"></div>
+
+        <div class="divider"></div>
+
+        <div class="ptitle">📊 Today's Stats</div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val" id="st-sessions" style="color:var(--accent)">0</div><div class="stat-lbl">Sessions</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-tasks" style="color:var(--accent2)">0</div><div class="stat-lbl">Tasks done</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-focus" style="color:var(--green)">0m</div><div class="stat-lbl">Focus time</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-streak" style="color:var(--purple)">0</div><div class="stat-lbl">Day streak</div></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- MÉTÉO -->
+        <div class="ptitle">🌤 Météo</div>
+        <div class="weather-search-wrap" id="weather-search-wrap">
+          <div class="weather-search-row">
+            <input class="weather-inp" id="weather-inp" placeholder="Entrez une ville…" autocomplete="off" />
+            <button class="weather-save-btn" id="weather-save-btn">Enregistrer</button>
+          </div>
+          <div class="weather-suggestions" id="weather-suggestions"></div>
+        </div>
+        <div class="weather-loading" id="weather-loading"><span class="spin">⟳</span> Chargement…</div>
+        <div class="weather-error" id="weather-error"></div>
+        <div class="weather-card" id="weather-card">
+          <div class="weather-top">
+            <div>
+              <div class="weather-city-name" id="w-city">—</div>
+              <div class="weather-country" id="w-country">—</div>
+            </div>
+            <div class="weather-main">
+              <div class="weather-emoji" id="w-emoji">—</div>
+              <div class="weather-temp" id="w-temp">—</div>
+              <div class="weather-unit">°C</div>
+            </div>
+          </div>
+          <div class="weather-desc" id="w-desc">—</div>
+          <div class="weather-details">
+            <div class="wd-item"><div class="wd-val" id="w-feels">—</div><div class="wd-lbl">Ressenti</div></div>
+            <div class="wd-item"><div class="wd-val" id="w-hum">—</div><div class="wd-lbl">Humidité</div></div>
+            <div class="wd-item"><div class="wd-val" id="w-wind">—</div><div class="wd-lbl">Vent</div></div>
+          </div>
+          <div class="weather-updated" id="w-updated">—</div>
+          <button class="weather-refresh-btn" id="weather-refresh-btn">↺ Actualiser</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="note-header">
+          <div class="ptitle">🌸 Quick Note</div>
+          <button class="note-fs-btn" id="note-fs-open" title="Plein écran">⤢</button>
+        </div>
+        <textarea class="quick-note" id="quick-note" placeholder="Vos pensées…"></textarea>
+
+      </aside>
+    </div>
+  </div>
+
+  <script>
+  // ======================================================
+  //  NIVFLOW — Script
+  // ======================================================
+
+  // ── QUOTES ──────────────────────────────────────────────
+  const QUOTES = [
+    "The present moment is the only time over which we have dominion.",
+    "Within you, there is a stillness and a sanctuary.",
+    "Almost everything will work again if you unplug it for a few minutes.",
+    "You are allowed to be both a masterpiece and a work in progress.",
+    "Breath is the bridge which connects life to consciousness.",
+    "Slow down and everything you are chasing will come around and catch you.",
+    "Peace comes from within. Do not seek it without.",
+    "The quieter you become, the more you can hear.",
+    "Rest is not idleness — it is the key to sustainable productivity.",
+    "Let go of what was. Embrace what is. Trust what will be.",
+    "Nothing is worth more than this day. — Goethe",
+  ];
+  let qIdx = Math.floor(Math.random() * QUOTES.length);
+  const quoteEl = document.getElementById('quote');
+  function rotateQuote() {
+    quoteEl.style.opacity = 0;
+    setTimeout(() => { quoteEl.textContent = '✦  ' + QUOTES[qIdx++ % QUOTES.length]; quoteEl.style.opacity = 1; }, 500);
+  }
+  rotateQuote();
+  setInterval(rotateQuote, 30000);
+
+  // ── CLOCK ────────────────────────────────────────────────
+  const timeEl = document.getElementById('time');
+  const dateEl = document.getElementById('date');
+  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function tick() {
+    const n = new Date();
+    timeEl.textContent = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+    dateEl.textContent = `${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]}`;
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── THEME ────────────────────────────────────────────────
+  const themeBtn = document.getElementById('theme-btn');
+  let theme = localStorage.getItem('zf-theme') || 'night';
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'night' ? '🌙' : '☀️';
+    localStorage.setItem('zf-theme', t); theme = t;
+  }
+  applyTheme(theme);
+  themeBtn.addEventListener('click', () => applyTheme(theme === 'night' ? 'day' : 'night'));
+
+  // ── DEEP FOCUS ───────────────────────────────────────────
+  const focusBtn = document.getElementById('focus-btn');
+  let focused = false;
+  focusBtn.addEventListener('click', () => {
+    focused = !focused;
+    document.body.classList.toggle('deep-focus', focused);
+    focusBtn.classList.toggle('on', focused);
+    toast(focused ? '◎ Deep focus on' : '◎ Normal mode restored');
+  });
+
+  // ── TOAST ────────────────────────────────────────────────
+  const toastEl = document.getElementById('toast');
+  let toastTmr;
+  function toast(msg) {
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastTmr);
+    toastTmr = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  // ── BACKGROUND CANVAS ────────────────────────────────────
+  const canvas = document.getElementById('bg-canvas');
+  const ctx    = canvas.getContext('2d');
+  let drops = [], particles = [], rainOn = false;
+
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initScene(); }
+  function initScene() {
+    drops = Array.from({ length: Math.floor(canvas.width / 7) }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      sp: 1.8 + Math.random() * 3, ln: 12 + Math.random() * 22, op: 0.03 + Math.random() * 0.09
+    }));
+    particles = Array.from({ length: 28 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      r: 0.8 + Math.random() * 1.8, dx: (Math.random() - 0.5) * 0.25,
+      dy: -0.08 - Math.random() * 0.18, op: 0.06 + Math.random() * 0.14
+    }));
+  }
+  function drawFrame() {
+    const night = theme === 'night';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    if (night) { sky.addColorStop(0,'#09111e'); sky.addColorStop(0.6,'#0b0f1a'); sky.addColorStop(1,'#0d1420'); }
+    else        { sky.addColorStop(0,'#d4cfc4'); sky.addColorStop(0.6,'#e4dfd5'); sky.addColorStop(1,'#ede8df'); }
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawScene(night);
+    if (rainOn) {
+      const rc = night ? 'rgba(160,185,230,' : 'rgba(100,130,190,';
+      drops.forEach(d => {
+        ctx.strokeStyle = rc + d.op + ')'; ctx.lineWidth = 0.7;
+        ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - 1, d.y + d.ln); ctx.stroke();
+        d.y += d.sp; if (d.y > canvas.height + 30) { d.y = -30; d.x = Math.random() * canvas.width; }
+      });
+    }
+    const pc = night ? 'rgba(201,170,122,' : 'rgba(160,120,70,';
+    particles.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = pc + p.op + ')'; ctx.fill();
+      p.x += p.dx; p.y += p.dy;
+      if (p.y < -5) { p.y = canvas.height + 5; p.x = Math.random() * canvas.width; }
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+    });
+    requestAnimationFrame(drawFrame);
+  }
+  function drawScene(night) {
+    const W = canvas.width, H = canvas.height;
+    if (night) {
+      const mg = ctx.createRadialGradient(W*0.82,H*0.1,0,W*0.82,H*0.1,100);
+      mg.addColorStop(0,'rgba(255,245,200,0.07)'); mg.addColorStop(1,'rgba(255,245,200,0)');
+      ctx.fillStyle = mg; ctx.fillRect(0,0,W,H);
+      ctx.beginPath(); ctx.arc(W*0.82,H*0.1,20,0,Math.PI*2); ctx.fillStyle='rgba(255,248,220,0.16)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(W*0.82,H*0.1,14,0,Math.PI*2); ctx.fillStyle='rgba(255,248,225,0.22)'; ctx.fill();
+      [[0.1,0.07],[0.22,0.04],[0.36,0.13],[0.5,0.05],[0.62,0.02],[0.7,0.17],[0.17,0.2],[0.44,0.14],[0.91,0.06]].forEach(([sx,sy]) => {
+        const t = (Date.now()/2200+sx*8)%(Math.PI*2); const op = 0.07+Math.sin(t)*0.06;
+        ctx.beginPath(); ctx.arc(sx*W,sy*H,1.4,0,Math.PI*2); ctx.fillStyle=`rgba(255,248,220,${op})`; ctx.fill();
+      });
+    } else {
+      const sg = ctx.createRadialGradient(W*0.78,H*0.07,0,W*0.78,H*0.07,130);
+      sg.addColorStop(0,'rgba(255,200,80,0.12)'); sg.addColorStop(1,'rgba(255,200,80,0)');
+      ctx.fillStyle = sg; ctx.fillRect(0,0,W,H);
+      ctx.beginPath(); ctx.arc(W*0.78,H*0.07,26,0,Math.PI*2); ctx.fillStyle='rgba(255,200,80,0.18)'; ctx.fill();
+    }
+    ctx.fillStyle = night ? 'rgba(8,12,24,0.6)' : 'rgba(60,50,40,0.08)';
+    ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(0,H*0.78);
+    ctx.bezierCurveTo(W*0.15,H*0.62,W*0.3,H*0.72,W*0.45,H*0.65);
+    ctx.bezierCurveTo(W*0.6,H*0.58,W*0.75,H*0.7,W,H*0.6);
+    ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+  }
+  resizeCanvas(); drawFrame(); window.addEventListener('resize', resizeCanvas);
+
+  // ── VIDEO CONTROLS ───────────────────────────────────────
+  // PAS DE SON — mute=1 est codé en dur dans l'URL de l'iframe.
+  // Seuls opacité, largeur et hauteur sont réglables.
+  const videoFrame = document.getElementById('video-frame');
+  const vcOpacity  = document.getElementById('vc-opacity');
+  const vcWidth    = document.getElementById('vc-width');
+  const vcHeight   = document.getElementById('vc-height');
+  const vcOpVal    = document.getElementById('vc-opacity-val');
+  const vcWVal     = document.getElementById('vc-width-val');
+  const vcHVal     = document.getElementById('vc-height-val');
+
+  function applyVideoStyles() {
+    videoFrame.style.opacity = vcOpacity.value / 100;
+    videoFrame.style.width   = vcWidth.value + '%';
+    videoFrame.style.height  = vcHeight.value + 'px';
+    vcOpVal.textContent = vcOpacity.value + '%';
+    vcWVal.textContent  = vcWidth.value   + '%';
+    vcHVal.textContent  = vcHeight.value  + 'px';
+    localStorage.setItem('zf-vid-op', vcOpacity.value);
+    localStorage.setItem('zf-vid-w',  vcWidth.value);
+    localStorage.setItem('zf-vid-h',  vcHeight.value);
+  }
+  // Restaurer préférences sauvegardées
+  vcOpacity.value = localStorage.getItem('zf-vid-op') || 80;
+  vcWidth.value   = localStorage.getItem('zf-vid-w')  || 100;
+  vcHeight.value  = localStorage.getItem('zf-vid-h')  || 190;
+  applyVideoStyles();
+
+  vcOpacity.addEventListener('input', applyVideoStyles);
+  vcWidth.addEventListener('input',   applyVideoStyles);
+  vcHeight.addEventListener('input',  applyVideoStyles);
+
+  // ── YOUTUBE MUSIC ────────────────────────────────────────
+  const PLAYLISTS = {
+    'lofi-girl': { id: 'jfKfPfyJRdk', name: 'Lofi Hip Hop Radio', sub: 'Lofi Girl ✦ 24/7' },
+    'chillhop':  { id: '5yx6BWlEVcY', name: 'Chillhop Radio',     sub: 'Chillhop Music ✦ Beats' },
+    'jazz':      { id: 'Dx5qFachd3A', name: 'Jazz Café Ambience', sub: 'Smooth Jazz ✦ Relax' },
+  };
+  let ytPlayer = null, curPl = 'lofi-girl', playing = false;
+  let musicVol = parseInt(localStorage.getItem('zf-mvol') || '70');
+  const AMBIENCE_LINKS = {
+    rain: 'https://www.youtube.com/watch?v=mPZkdNFkNps',
+    wind: 'https://www.youtube.com/watch?v=sGkh1W5cbH4',
+    fire: 'https://www.youtube.com/watch?v=g6Ye4xwXyAw',
+    cafe: 'https://www.youtube.com/watch?v=qU8o3_T5y5M',
+  };
+  const ambPlayers = {}, ambActive = { rain:false, wind:false, fire:false, cafe:false };
+
+  function extractYouTubeId(input) {
+    if (!input) return '';
+    const s = String(input).trim();
+    const patterns = [/(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,/(?:youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/,/(?:youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,/^([A-Za-z0-9_-]{11})$/];
+    for (const re of patterns) { const m = s.match(re); if (m) return m[1]; }
+    return '';
+  }
+  function isValidYouTubeSource(input) { return !!extractYouTubeId(input); }
+
+  const ytTag = document.createElement('script');
+  ytTag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(ytTag);
+
+  window.onYouTubeIframeAPIReady = function () {
+    ytPlayer = new YT.Player('yt-player', {
+      height:'1', width:'1', videoId: PLAYLISTS[curPl].id,
+      playerVars: { autoplay:0, controls:0, loop:1, playsinline:1, modestbranding:1, rel:0 },
+      events: {
+        onReady: e => e.target.setVolume(musicVol),
+        onStateChange: e => { if (e.data === YT.PlayerState.ENDED) e.target.playVideo(); }
+      }
+    });
+    Object.keys(AMBIENCE_LINKS).forEach(snd => {
+      const videoId = extractYouTubeId(AMBIENCE_LINKS[snd]); if (!videoId) return;
+      ambPlayers[snd] = new YT.Player(`yt-amb-${snd}`, {
+        height:'1', width:'1', videoId,
+        playerVars: { autoplay:0, controls:0, loop:1, playsinline:1, modestbranding:1, rel:0 },
+        events: { onReady: e => e.target.setVolume(10), onStateChange: e => { if (e.data===YT.PlayerState.ENDED) e.target.playVideo(); } }
+      });
+    });
+  };
+
+  const playBtn = document.getElementById('play-btn');
+  const vinyl   = document.getElementById('vinyl');
+  function setTrack(pid) {
+    const p = PLAYLISTS[pid];
+    document.getElementById('track-name').textContent = p.name;
+    document.getElementById('track-sub').textContent  = p.sub;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.pl === pid));
+  }
+  playBtn.addEventListener('click', () => {
+    if (!ytPlayer?.playVideo) { toast('🎵 Player loading…'); return; }
+    if (playing) { ytPlayer.pauseVideo(); playBtn.textContent='▶'; vinyl.classList.remove('on'); }
+    else { ytPlayer.playVideo(); playBtn.textContent='⏸'; vinyl.classList.add('on'); }
+    playing = !playing;
+  });
+  function switchPl(pid) {
+    curPl = pid; setTrack(pid);
+    if (ytPlayer?.loadVideoById) { ytPlayer.loadVideoById(PLAYLISTS[pid].id); if (!playing) ytPlayer.pauseVideo(); }
+  }
+  document.getElementById('next-btn').addEventListener('click', () => { const ks=Object.keys(PLAYLISTS); switchPl(ks[(ks.indexOf(curPl)+1)%ks.length]); });
+  document.getElementById('prev-btn').addEventListener('click', () => { const ks=Object.keys(PLAYLISTS); switchPl(ks[(ks.indexOf(curPl)-1+ks.length)%ks.length]); });
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => switchPl(c.dataset.pl)));
+  const mVolEl = document.getElementById('music-vol');
+  mVolEl.value = musicVol;
+  mVolEl.addEventListener('input', e => { musicVol=+e.target.value; ytPlayer?.setVolume?.(musicVol); localStorage.setItem('zf-mvol', musicVol); });
+  setTrack(curPl);
+
+  // ── AMBIENCE ─────────────────────────────────────────────
+  function setAmbianceVolume(snd, v) { ambPlayers[snd]?.setVolume?.(v); }
+  function playAmbience(snd, vol) {
+    const p = ambPlayers[snd]; if (!p?.playVideo) return false;
+    p.setVolume(vol); p.playVideo(); ambActive[snd]=true;
+    if (snd==='rain') rainOn=true; return true;
+  }
+  function stopAmbience(snd) {
+    try { ambPlayers[snd]?.pauseVideo(); } catch(e) {}
+    ambActive[snd]=false; if (snd==='rain') rainOn=false;
+  }
+  function stopAllAmbience() {
+    Object.keys(ambActive).forEach(snd => { if (ambActive[snd]) { stopAmbience(snd); document.querySelector(`.amb-card[data-sound="${snd}"]`)?.classList.remove('on'); } });
+    rainOn=false;
+  }
+  document.querySelectorAll('.amb-card').forEach(card => {
+    const snd=card.dataset.sound, slider=card.querySelector('.amb-slider');
+    card.addEventListener('click', e => {
+      if (e.target===slider) return;
+      if (!isValidYouTubeSource(AMBIENCE_LINKS[snd])) { toast(`Lien invalide pour ${snd}`); return; }
+      if (card.classList.contains('on')) { stopAmbience(snd); card.classList.remove('on'); }
+      else { if (!playAmbience(snd,+slider.value)) { toast('Ambiance loading…'); return; } card.classList.add('on'); }
+    });
+    slider.addEventListener('input', e => { e.stopPropagation(); if (ambActive[snd]) setAmbianceVolume(snd,+e.target.value); });
+  });
+  document.getElementById('reset-btn').addEventListener('click', () => { stopAllAmbience(); toast('✦ Ambiance cleared'); });
+
+  // ── POMODORO ──────────────────────────────────────────────
+  let timerDur=25*60, timerLeft=timerDur, timerOn=false, timerInt=null;
+  let sessions  = parseInt(localStorage.getItem('zf-sess')  || '0');
+  let focusTime = parseInt(localStorage.getItem('zf-ftime') || '0');
+  const timerEl=document.getElementById('timer-disp'), progEl=document.getElementById('prog');
+  const timerPlayEl=document.getElementById('timer-play'), timerRstEl=document.getElementById('timer-reset');
+  const sDotsEl=document.getElementById('sdots');
+  function fmtTime(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+  function renderTimer(){timerEl.textContent=fmtTime(timerLeft);progEl.style.width=(timerLeft/timerDur*100)+'%';}
+  function renderDots(){sDotsEl.querySelectorAll('.sdot').forEach((d,i)=>d.classList.toggle('on',i<sessions%4));document.getElementById('st-sessions').textContent=sessions;document.getElementById('st-focus').textContent=Math.floor(focusTime/60)+'m';document.getElementById('st-streak').textContent=Math.min(sessions,7);}
+  function bell(){try{const AC=window.AudioContext||window.webkitAudioContext,c=new AC(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=528;g.gain.setValueAtTime(0.28,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+2.5);o.start();o.stop(c.currentTime+2.5);}catch(e){}}
+  timerPlayEl.addEventListener('click',()=>{
+    if(timerOn){clearInterval(timerInt);timerOn=false;timerPlayEl.textContent='▶';}
+    else{timerOn=true;timerPlayEl.textContent='⏸';timerInt=setInterval(()=>{
+      if(timerLeft<=0){clearInterval(timerInt);timerOn=false;timerPlayEl.textContent='▶';sessions++;focusTime+=timerDur;localStorage.setItem('zf-sess',sessions);localStorage.setItem('zf-ftime',focusTime);renderDots();bell();toast('🎉 Session complete!');return;}
+      timerLeft--;focusTime++;document.getElementById('st-focus').textContent=Math.floor(focusTime/60)+'m';renderTimer();
+    },1000);}
+  });
+  timerRstEl.addEventListener('click',()=>{clearInterval(timerInt);timerOn=false;timerPlayEl.textContent='▶';timerLeft=timerDur;renderTimer();});
+  document.querySelectorAll('.tmbtn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.tmbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    const cd=document.getElementById('custom-dur');
+    if(b.dataset.mode==='custom'){cd.style.display='flex';timerDur=(+document.getElementById('custom-min').value||25)*60;}
+    else{cd.style.display='none';timerDur=+b.dataset.dur*60;}
+    clearInterval(timerInt);timerOn=false;timerPlayEl.textContent='▶';timerLeft=timerDur;renderTimer();
+  }));
+  document.getElementById('custom-min').addEventListener('input',e=>{timerDur=(+e.target.value||1)*60;timerLeft=timerDur;renderTimer();});
+  renderTimer();renderDots();
+
+  // ── TODO ──────────────────────────────────────────────────
+  let todos=JSON.parse(localStorage.getItem('zf-todos')||'[]');
+  const listEl=document.getElementById('todo-list'), inpEl=document.getElementById('todo-inp');
+  function saveTodos(){localStorage.setItem('zf-todos',JSON.stringify(todos));document.getElementById('st-tasks').textContent=todos.filter(t=>t.done).length;}
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function renderTodos(){listEl.innerHTML='';todos.forEach((t,i)=>{const div=document.createElement('div');div.className='todo-item'+(t.done?' done':'');div.innerHTML=`<div class="todo-check">${t.done?'✓':''}</div><span class="todo-text">${esc(t.text)}</span><button class="todo-del">✕</button>`;div.querySelector('.todo-check').addEventListener('click',()=>{todos[i].done=!todos[i].done;saveTodos();renderTodos();});div.querySelector('.todo-del').addEventListener('click',()=>{todos.splice(i,1);saveTodos();renderTodos();});listEl.appendChild(div);});document.getElementById('st-tasks').textContent=todos.filter(t=>t.done).length;}
+  function addTodo(){const v=inpEl.value.trim();if(!v)return;todos.unshift({text:v,done:false});inpEl.value='';saveTodos();renderTodos();}
+  document.getElementById('todo-add').addEventListener('click',addTodo);
+  inpEl.addEventListener('keydown',e=>{if(e.key==='Enter')addTodo();});
+  renderTodos();
+
+  // ── NOTE ──────────────────────────────────────────────────
+  const noteEl=document.getElementById('quick-note'), noteFsEl=document.getElementById('note-fs-area');
+  noteEl.value=localStorage.getItem('zf-note')||'';
+  function saveNote(v){localStorage.setItem('zf-note',v);}
+  noteEl.addEventListener('input',()=>{saveNote(noteEl.value);noteFsEl.value=noteEl.value;updateNoteStatus();});
+  const noteFs=document.getElementById('note-fullscreen'), noteFsOpen=document.getElementById('note-fs-open'), noteFsClose=document.getElementById('note-fs-close'), noteFsStatus=document.getElementById('note-fs-status');
+  noteFsEl.value=localStorage.getItem('zf-note')||'';
+  function updateNoteStatus(){const text=noteFsEl.value.trim(),words=text?text.split(/\s+/).length:0;noteFsStatus.textContent=`${words} mot${words!==1?'s':''} · ${noteFsEl.value.length} car. · sauvegardé`;}
+  updateNoteStatus();
+  noteFsEl.addEventListener('input',()=>{saveNote(noteFsEl.value);noteEl.value=noteFsEl.value;updateNoteStatus();});
+  noteFsOpen.addEventListener('click',()=>{noteFsEl.value=noteEl.value;noteFs.classList.add('open');setTimeout(()=>noteFsEl.focus(),100);updateNoteStatus();});
+  noteFsClose.addEventListener('click',()=>{noteEl.value=noteFsEl.value;noteFs.classList.remove('open');});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&noteFs.classList.contains('open')){noteEl.value=noteFsEl.value;noteFs.classList.remove('open');}});
+
+  // ── WEATHER ───────────────────────────────────────────────
+  const WMO={0:{l:'Ciel dégagé',e:'☀️'},1:{l:'Principalement dégagé',e:'🌤️'},2:{l:'Partiellement nuageux',e:'⛅'},3:{l:'Couvert',e:'☁️'},45:{l:'Brouillard',e:'🌫️'},48:{l:'Brouillard givrant',e:'🌫️'},51:{l:'Bruine légère',e:'🌦️'},53:{l:'Bruine modérée',e:'🌦️'},55:{l:'Bruine dense',e:'🌧️'},61:{l:'Pluie légère',e:'🌧️'},63:{l:'Pluie modérée',e:'🌧️'},65:{l:'Forte pluie',e:'🌧️'},71:{l:'Neige légère',e:'🌨️'},73:{l:'Neige modérée',e:'❄️'},75:{l:'Forte neige',e:'❄️'},80:{l:'Averses légères',e:'🌦️'},81:{l:'Averses modérées',e:'🌧️'},82:{l:'Fortes averses',e:'⛈️'},95:{l:'Orage',e:'⛈️'},96:{l:'Orage grêle',e:'⛈️'},99:{l:'Orage fort',e:'🌩️'}};
+  function getWmo(c){return WMO[c]||{l:'—',e:'🌡️'};}
+  let weatherCity=JSON.parse(localStorage.getItem('zf-weather-city')||'null'), suggTimeout=null, currentSuggestions=[], selectedSuggIndex=-1;
+  const wInp=document.getElementById('weather-inp'), wSugg=document.getElementById('weather-suggestions'), wSaveBtn=document.getElementById('weather-save-btn'), wCard=document.getElementById('weather-card'), wLoading=document.getElementById('weather-loading'), wError=document.getElementById('weather-error');
+  if(weatherCity){wInp.value=weatherCity.name+(weatherCity.admin?', '+weatherCity.admin:'')+', '+weatherCity.country;fetchWeather(weatherCity.lat,weatherCity.lon,weatherCity.name,weatherCity.country);}
+  wInp.addEventListener('input',()=>{const q=wInp.value.trim();clearTimeout(suggTimeout);if(q.length<2){hideSuggestions();return;}suggTimeout=setTimeout(()=>fetchSuggestions(q),280);});
+  wInp.addEventListener('keydown',e=>{if(!wSugg.classList.contains('open'))return;if(e.key==='ArrowDown'){e.preventDefault();selectedSuggIndex=Math.min(selectedSuggIndex+1,currentSuggestions.length-1);highlightSugg();}else if(e.key==='ArrowUp'){e.preventDefault();selectedSuggIndex=Math.max(selectedSuggIndex-1,0);highlightSugg();}else if(e.key==='Enter'){e.preventDefault();if(currentSuggestions[selectedSuggIndex])selectSuggestion(currentSuggestions[selectedSuggIndex]);}else if(e.key==='Escape')hideSuggestions();});
+  document.addEventListener('click',e=>{if(!document.getElementById('weather-search-wrap').contains(e.target))hideSuggestions();});
+  async function fetchSuggestions(q){try{const res=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=7&language=fr&format=json`);const data=await res.json();currentSuggestions=data.results||[];selectedSuggIndex=-1;renderSuggestions(currentSuggestions);}catch{hideSuggestions();}}
+  function renderSuggestions(r){if(!r.length){hideSuggestions();return;}wSugg.innerHTML='';r.forEach((item)=>{const el=document.createElement('div');el.className='sugg-item';const meta=[item.admin1,item.country].filter(Boolean).join(', ');el.innerHTML=`<span style="font-size:14px">📍</span><div><div class="sugg-city">${item.name}</div>${meta?`<div class="sugg-meta">${meta}</div>`:''}</div>`;el.addEventListener('mousedown',e=>{e.preventDefault();selectSuggestion(item);});wSugg.appendChild(el);});wSugg.classList.add('open');}
+  function highlightSugg(){wSugg.querySelectorAll('.sugg-item').forEach((el,i)=>el.style.background=i===selectedSuggIndex?'var(--glass2)':'');}
+  function hideSuggestions(){wSugg.classList.remove('open');wSugg.innerHTML='';currentSuggestions=[];selectedSuggIndex=-1;}
+  function selectSuggestion(r){wInp.value=r.name+(r.admin1?', '+r.admin1:'')+', '+r.country;hideSuggestions();weatherCity={lat:r.latitude,lon:r.longitude,name:r.name,admin:r.admin1||'',country:r.country};}
+  wSaveBtn.addEventListener('click',()=>{if(!weatherCity){toast('⚠️ Sélectionnez une ville d\'abord');return;}localStorage.setItem('zf-weather-city',JSON.stringify(weatherCity));fetchWeather(weatherCity.lat,weatherCity.lon,weatherCity.name,weatherCity.country);toast('✦ Ville : '+weatherCity.name);});
+  document.getElementById('weather-refresh-btn').addEventListener('click',()=>{if(weatherCity)fetchWeather(weatherCity.lat,weatherCity.lon,weatherCity.name,weatherCity.country);});
+  async function fetchWeather(lat,lon,name,country){wLoading.classList.add('show');wCard.classList.remove('visible');wError.classList.remove('show');try{const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relative_humidity_2m&timezone=auto&wind_speed_unit=kmh`);const data=await res.json();const c=data.current,wmo=getWmo(c.weathercode);document.getElementById('w-city').textContent=name;document.getElementById('w-country').textContent=country||'';document.getElementById('w-emoji').textContent=wmo.e;document.getElementById('w-temp').textContent=Math.round(c.temperature_2m);document.getElementById('w-desc').textContent=wmo.l;document.getElementById('w-feels').textContent=Math.round(c.apparent_temperature)+'°';document.getElementById('w-hum').textContent=c.relative_humidity_2m+'%';document.getElementById('w-wind').textContent=Math.round(c.windspeed_10m)+' km/h';const now=new Date();document.getElementById('w-updated').textContent=`Mis à jour à ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;wLoading.classList.remove('show');wCard.classList.add('visible');}catch{wLoading.classList.remove('show');wError.textContent='⚠️ Impossible de récupérer la météo.';wError.classList.add('show');}}
+
+  // ── EASTER EGGS ───────────────────────────────────────────
+  let logoTaps=0,logoTmr;
+  document.getElementById('logo').addEventListener('click',()=>{logoTaps++;clearTimeout(logoTmr);logoTmr=setTimeout(()=>logoTaps=0,2000);if(logoTaps===5){logoTaps=0;toast('✨ Zen mode unlocked!');document.querySelectorAll('.panel').forEach(p=>{p.style.transition='box-shadow 0.6s';p.style.boxShadow='0 0 50px rgba(201,170,122,0.18)';setTimeout(()=>p.style.boxShadow='',1400);});}});
+  let k=[],KONAMI=[38,38,40,40,37,39,37,39,66,65];
+  document.addEventListener('keydown',e=>{k.push(e.keyCode);k=k.slice(-10);if(k.join()===KONAMI.join()){toast('🎮 +100 focus XP!');document.body.style.filter='hue-rotate(30deg)';setTimeout(()=>document.body.style.filter='',2000);}});
+
+  console.log('%c✦ nivflow','color:#c9aa7a;font-size:24px;font-weight:bold;font-family:serif;');
+  console.log('%cFind your focus. Breathe. Be present.','color:#6e7585;font-size:13px;');
+  </script>
+</body>
+</html>
